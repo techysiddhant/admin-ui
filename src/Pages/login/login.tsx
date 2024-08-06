@@ -1,17 +1,24 @@
-import { Button, Card, Checkbox, Flex, Form, Input, Layout, Space } from "antd"
+import { Alert, Button, Card, Checkbox, Flex, Form, Input, Layout, Space } from "antd"
 import { LockFilled, UserOutlined, LockOutlined } from '@ant-design/icons'
 import Logo from "../../components/icons/Logo"
-
+import { useMutation } from "@tanstack/react-query"
+import { Credentials } from "../../types"
+import { login } from "../../http/api"
+const loginUser = async (credentials: Credentials) => {
+    //TODO: server call logic
+    const { data } = await login(credentials);
+    return data;
+}
 const LoginPage = () => {
+    const { mutate, isPending, isError, error } = useMutation({
+        mutationKey: ['login'],
+        mutationFn: loginUser,
+        onSuccess: async () => {
+            console.log('Login successfull.')
+        }
+    });
     return (
         <>
-            {/* <h1>Sign in</h1>
-            <input type="text" placeholder="Username" />
-            <input type="text" placeholder="Password" />
-            <label htmlFor="remember-me">Remember me</label>
-            <input type="checkbox" placeholder="Remember me" id="remember-me" />
-            <button>Log in</button>
-            <a href="#">Forgot password</a> */}
             <Layout style={{ height: '100vh', display: 'grid', placeItems: 'center' }}>
                 <Space direction="vertical" align="center" size={'large'}>
                     <Layout.Content style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -22,7 +29,15 @@ const LoginPage = () => {
                     </Space>} bordered={false} style={{ width: 300 }}>
                         <Form initialValues={{
                             remember: true
+                        }} onFinish={(values) => {
+                            console.log(values);
+                            mutate({ email: values.username, password: values.password });
                         }}>
+                            {
+                                isError && (
+                                    <Alert type="error" message={error.message} style={{ marginBottom: 24 }} />
+                                )
+                            }
                             <Form.Item name={'username'} rules={[
                                 {
                                     required: true,
@@ -53,7 +68,7 @@ const LoginPage = () => {
                                 <a href="" id="loin-form-forgot">Forgot password</a>
                             </Flex>
                             <Form.Item>
-                                <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
+                                <Button loading={isPending} type="primary" htmlType="submit" style={{ width: '100%' }}>
                                     Log in
                                 </Button>
                             </Form.Item>
