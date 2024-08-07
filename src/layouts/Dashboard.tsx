@@ -69,7 +69,7 @@ const Dashboard = () => {
                 <Layout>
                     <Header style={{ paddingLeft: '16px', paddingRight: '16px', background: colorBgContainer }} >
                         <Flex gap={"middle"} align="start" justify="space-between">
-                            <Badge text="New Delhi" status="success" />
+                            <Badge text={user?.role === 'admin' ? "You are admin" : user?.tenant?.name} status="success" />
                             <Space size={16}>
                                 <Badge dot={true}>
                                     <BellFilled />
