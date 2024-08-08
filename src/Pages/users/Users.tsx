@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getUsers } from "../../http/api"
 import { User } from "../../types"
 import { useAuthStore } from "../../store"
+import UserFilter from "./UserFilter"
 const columns = [
     {
         title: 'ID',
@@ -40,7 +41,6 @@ const Users = () => {
             return getUsers().then((res) => res.data.data)
         }
     })
-    // console.log(users);
     const { user } = useAuthStore();
     if (user?.role !== 'admin') {
         return <Navigate to='/auth/login' replace={true} />
@@ -51,6 +51,7 @@ const Users = () => {
                 <Breadcrumb separator={<RightOutlined />} items={[{ title: <Link to="/">Dashboard</Link> }, { title: 'Users' }]} />
                 {isLoading && <div>Loading...</div>}
                 {isError && <div>{error?.message}</div>}
+                <UserFilter />
                 <Table columns={columns} dataSource={users} />
             </Space>
 
