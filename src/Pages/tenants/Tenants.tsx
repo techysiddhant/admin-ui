@@ -3,9 +3,11 @@ import {
     Button,
     Drawer,
     Flex,
+    Form,
     Space,
     Spin,
     Table,
+    theme,
     Typography,
 } from 'antd';
 import { RightOutlined, PlusOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -15,6 +17,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from '../../store';
 import { getTenants } from '../../http/api';
+import TenantForm from './forms/TenantForm';
 
 const columns = [
     {
@@ -34,6 +37,7 @@ const columns = [
     },
 ];
 const Tenants = () => {
+    const { token: { colorBgLayout } } = theme.useToken();
     const [drawerOpen, setDrawerOpen] = React.useState(false);
     const {
         data: tenants,
@@ -42,10 +46,7 @@ const Tenants = () => {
         error,
     } = useQuery({
         queryKey: ['tenants'],
-        queryFn: () => {
-
-
-
+        queryFn: async () => {
             return getTenants().then((res) => res.data);
         },
         // placeholderData: keepPreviousData,
@@ -95,12 +96,11 @@ const Tenants = () => {
                     columns={columns}
                     dataSource={tenants?.data}
                     rowKey={'id'}
-
                 />
 
                 <Drawer
                     title="Create restaurant"
-                    // styles={{ body: { backgroundColor: colorBgLayout } }}
+                    styles={{ body: { backgroundColor: colorBgLayout } }}
                     width={720}
                     destroyOnClose={true}
                     open={drawerOpen}
@@ -121,9 +121,9 @@ const Tenants = () => {
                             </Button>
                         </Space>
                     }>
-                    {/* <Form layout="vertical" form={form}>
+                    <Form layout="vertical" >
                         <TenantForm />
-                    </Form> */}
+                    </Form>
                 </Drawer>
             </Space>
         </>
