@@ -1,6 +1,19 @@
 import { Card, Col, Form, Input, Row, Select, Space } from "antd"
+import { getTenants } from "../../../http/api";
+import { useQuery } from "@tanstack/react-query";
+import { Tenant } from "../../../types";
 
 const TenantForm = () => {
+    const {
+        data: tenants
+    } = useQuery({
+        queryKey: ['tenants'],
+        queryFn: async () => {
+            return getTenants().then((res) => res.data);
+        },
+        // placeholderData: keepPreviousData,
+    });
+    console.log(tenants);
     return (
         <Row>
             <Col span={24}>
@@ -50,10 +63,15 @@ const TenantForm = () => {
                             </Col>
                             <Col span={12}>
                                 <Form.Item label="Select Tenant" name={'tenantId'}>
-                                    <Select style={{ width: '100%' }} onChange={() => { }} allowClear={true} placeholder="Select Role">
-                                        <Select.Option value="admin">Resturant -1</Select.Option>
-                                        <Select.Option value="manager">Resturant -2</Select.Option>
-                                        <Select.Option value="customer">Resturant -3</Select.Option>
+                                    <Select style={{ width: '100%' }} onChange={() => { }} allowClear={true} placeholder="Select Restaurants">
+                                        {
+                                            tenants &&
+                                            tenants?.data?.map((tenant: Tenant) => (
+                                                <Select.Option key={tenant.id} value={tenant.id}>{tenant.name}</Select.Option>
+
+                                            ))
+                                        }
+
                                     </Select>
                                 </Form.Item>
                             </Col>
