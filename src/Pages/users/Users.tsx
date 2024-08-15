@@ -6,9 +6,10 @@ import { createUser, getUsers } from "../../http/api"
 import { CreateUserData, User } from "../../types"
 import { useAuthStore } from "../../store"
 import UserFilter from "./UserFilter"
-import { useState } from "react"
+import React, { useState } from "react"
 import { PlusOutlined } from '@ant-design/icons'
 import UserForm from "./forms/UserForm"
+import { PER_PAGE } from "../../constants"
 
 const columns = [
     {
@@ -42,10 +43,15 @@ const Users = () => {
     const [form] = Form.useForm();
     const queryClient = useQueryClient();
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [queryParams, setQueryParams] = React.useState({
+        perPage: PER_PAGE,
+        currentPage: 1
+    })
     const { data: users, isLoading, isError, error } = useQuery({
-        queryKey: ['users'],
+        queryKey: ['users', queryParams],
         queryFn: async () => {
-            return getUsers().then((res) => res.data.data)
+            const queryString = new URLSearchParams(queryParams as unknown as Record<string, string>).toString();
+            return getUsers(queryString).then((res) => res.data)
         }
     })
     const { mutate: userMutate } = useMutation({
@@ -67,6 +73,7 @@ const Users = () => {
         form.resetFields();
         setDrawerOpen(false);
     }
+    // console.log(users);
     return (
         <>
             <Space direction="vertical" style={{ width: '100%' }} size={'large'}>
@@ -80,7 +87,18 @@ const Users = () => {
                         Add user
                     </Button>
                 </UserFilter>
-                <Table columns={columns} dataSource={users} rowKey={'id'} />
+                <Table columns={columns} dataSource={users?.data} rowKey={'id'} pagination={{
+                    total: users?.total,
+                    pageSize: queryParams.perPage,
+                    current: queryParams.currentPage,
+                    onChange: (page) => {
+                        setQueryParams((prev) => {
+                            return {
+                                ...prev, currentPage: page
+                            }
+                        })
+                    }
+                }} />
                 <Drawer title="Create user" width={720} open={drawerOpen} destroyOnClose={true} onClose={() => { form.resetFields(); setDrawerOpen(false) }}
                     extra={
                         <Space>
