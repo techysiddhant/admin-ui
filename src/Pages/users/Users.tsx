@@ -1,7 +1,7 @@
-import { Breadcrumb, Button, Drawer, Form, Space, Table } from "antd"
-import { RightOutlined } from '@ant-design/icons'
+import { Breadcrumb, Button, Drawer, Flex, Form, Space, Spin, Table, Typography } from "antd"
+import { RightOutlined, LoadingOutlined } from '@ant-design/icons'
 import { Link, Navigate } from "react-router-dom"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createUser, getUsers } from "../../http/api"
 import { CreateUserData, User } from "../../types"
 import { useAuthStore } from "../../store"
@@ -47,12 +47,13 @@ const Users = () => {
         perPage: PER_PAGE,
         currentPage: 1
     })
-    const { data: users, isLoading, isError, error } = useQuery({
+    const { data: users, isFetching, isError, error } = useQuery({
         queryKey: ['users', queryParams],
         queryFn: async () => {
             const queryString = new URLSearchParams(queryParams as unknown as Record<string, string>).toString();
             return getUsers(queryString).then((res) => res.data)
-        }
+        },
+        placeholderData: keepPreviousData
     })
     const { mutate: userMutate } = useMutation({
         mutationKey: ['user'],
@@ -77,9 +78,11 @@ const Users = () => {
     return (
         <>
             <Space direction="vertical" style={{ width: '100%' }} size={'large'}>
-                <Breadcrumb separator={<RightOutlined />} items={[{ title: <Link to="/">Dashboard</Link> }, { title: 'Users' }]} />
-                {isLoading && <div>Loading...</div>}
-                {isError && <div>{error?.message}</div>}
+                <Flex justify="space-between">
+                    <Breadcrumb separator={<RightOutlined />} items={[{ title: <Link to="/">Dashboard</Link> }, { title: 'Users' }]} />
+                    {isFetching && <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} />} />}
+                    {isError && <Typography.Text type="danger">{error?.message}</Typography.Text>}
+                </Flex>
                 <UserFilter onFilterChange={(filterName: string, filterValue: string) => {
                     console.log(filterName, filterValue);
                 }} >
