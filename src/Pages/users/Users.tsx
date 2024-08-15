@@ -1,13 +1,14 @@
-import { Breadcrumb, Button, Drawer, Space, Table } from "antd"
+import { Breadcrumb, Button, Drawer, Form, Space, Table } from "antd"
 import { RightOutlined } from '@ant-design/icons'
 import { Link, Navigate } from "react-router-dom"
-import { useQuery } from "@tanstack/react-query"
-import { getUsers } from "../../http/api"
-import { User } from "../../types"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { createUser, getUsers } from "../../http/api"
+import { CreateUserData, User } from "../../types"
 import { useAuthStore } from "../../store"
 import UserFilter from "./UserFilter"
 import { useState } from "react"
 import { PlusOutlined } from '@ant-design/icons'
+import UserForm from "./forms/UserForm"
 
 const columns = [
     {
@@ -38,6 +39,8 @@ const columns = [
     },
 ]
 const Users = () => {
+    const [form] = Form.useForm();
+    const queryClient = useQueryClient();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const { data: users, isLoading, isError, error } = useQuery({
         queryKey: ['users'],
@@ -45,9 +48,24 @@ const Users = () => {
             return getUsers().then((res) => res.data.data)
         }
     })
+    const { mutate: userMutate } = useMutation({
+        mutationKey: ['user'],
+        mutationFn: async (data: CreateUserData) => createUser(data).then((res) => res.data),
+        onSuccess: async () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            return;
+        },
+    })
     const { user } = useAuthStore();
     if (user?.role !== 'admin') {
         return <Navigate to='/auth/login' replace={true} />
+    }
+    const onHandleSubmit = async () => {
+        // console.log(form.getFieldsValue());
+        await form.validateFields();
+        await userMutate(form.getFieldsValue());
+        form.resetFields();
+        setDrawerOpen(false);
     }
     return (
         <>
@@ -63,15 +81,17 @@ const Users = () => {
                     </Button>
                 </UserFilter>
                 <Table columns={columns} dataSource={users} rowKey={'id'} />
-                <Drawer title="Create user" width={720} open={drawerOpen} destroyOnClose={true} onClose={() => setDrawerOpen(!drawerOpen)}
+                <Drawer title="Create user" width={720} open={drawerOpen} destroyOnClose={true} onClose={() => { form.resetFields(); setDrawerOpen(false) }}
                     extra={
                         <Space>
-                            <Button>Cancel</Button>
-                            <Button type="primary">Submit</Button>
+                            <Button onClick={() => { form.resetFields(); setDrawerOpen(false) }}>Cancel</Button>
+                            <Button type="primary" onClick={onHandleSubmit}>Submit</Button>
                         </Space>
                     }
                 >
-
+                    <Form layout="vertical" form={form}>
+                        <UserForm />
+                    </Form>
                 </Drawer>
             </Space>
 
