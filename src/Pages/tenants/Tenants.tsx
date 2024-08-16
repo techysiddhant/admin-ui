@@ -67,7 +67,7 @@ const Tenants = () => {
 
     const debouncedQUpdate = useMemo(() => {
         return debounce((value: string | undefined) => {
-            setQueryParams((prev) => ({ ...prev, q: value }))
+            setQueryParams((prev) => ({ ...prev, q: value, currentPage: 1 }))
         }, 500)
     }, [])
 
@@ -82,7 +82,7 @@ const Tenants = () => {
             debouncedQUpdate(changedFilterFields.q)
         } else {
             setQueryParams((prev) => ({
-                ...prev, ...changedFilterFields
+                ...prev, ...changedFilterFields, currentPage: 1
             }))
         }
     }
