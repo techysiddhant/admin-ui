@@ -6,10 +6,11 @@ import { createUser, getUsers } from "../../http/api"
 import { CreateUserData, FieldData, User } from "../../types"
 import { useAuthStore } from "../../store"
 import UserFilter from "./UserFilter"
-import React, { useState } from "react"
+import React, { useMemo, useState } from "react"
 import { PlusOutlined } from '@ant-design/icons'
 import UserForm from "./forms/UserForm"
 import { PER_PAGE } from "../../constants"
+import { debounce } from "lodash"
 
 const columns = [
     {
@@ -66,6 +67,11 @@ const Users = () => {
         },
     })
     const { user } = useAuthStore();
+    const debouncedQUpdate = useMemo(() => {
+        return debounce((value: string | undefined) => {
+            setQueryParams((prev) => ({ ...prev, q: value }))
+        }, 1000)
+    }, [])
     const onFilterChange = (changedFields: FieldData[]) => {
         // console.log(changedFields);
         const changedFilterFields = changedFields.map((item) => {
@@ -73,10 +79,15 @@ const Users = () => {
                 [item.name[0]]: item.value
             }
         }).reduce((acc, item) => ({ ...acc, ...item }), {});
-        console.log(changedFilterFields);
-        setQueryParams((prev) => ({
-            ...prev, ...changedFilterFields
-        }))
+        if ('q' in changedFilterFields) {
+            debouncedQUpdate(changedFilterFields.q)
+        } else {
+            setQueryParams((prev) => ({
+                ...prev, ...changedFilterFields
+            }))
+        }
+        // console.log(changedFilterFields);
+
     }
     if (user?.role !== 'admin') {
         return <Navigate to='/auth/login' replace={true} />
