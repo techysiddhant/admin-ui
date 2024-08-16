@@ -3,7 +3,7 @@ import { RightOutlined, LoadingOutlined } from '@ant-design/icons'
 import { Link, Navigate } from "react-router-dom"
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createUser, getUsers } from "../../http/api"
-import { CreateUserData, User } from "../../types"
+import { CreateUserData, FieldData, User } from "../../types"
 import { useAuthStore } from "../../store"
 import UserFilter from "./UserFilter"
 import React, { useState } from "react"
@@ -41,6 +41,7 @@ const columns = [
 ]
 const Users = () => {
     const [form] = Form.useForm();
+    const [filterForm] = Form.useForm();
     const queryClient = useQueryClient();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [queryParams, setQueryParams] = React.useState({
@@ -50,7 +51,8 @@ const Users = () => {
     const { data: users, isFetching, isError, error } = useQuery({
         queryKey: ['users', queryParams],
         queryFn: async () => {
-            const queryString = new URLSearchParams(queryParams as unknown as Record<string, string>).toString();
+            const filteredParams = Object.fromEntries(Object.entries(queryParams).filter(item => !!item[1]));
+            const queryString = new URLSearchParams(filteredParams as unknown as Record<string, string>).toString();
             return getUsers(queryString).then((res) => res.data)
         },
         placeholderData: keepPreviousData
@@ -64,6 +66,18 @@ const Users = () => {
         },
     })
     const { user } = useAuthStore();
+    const onFilterChange = (changedFields: FieldData[]) => {
+        // console.log(changedFields);
+        const changedFilterFields = changedFields.map((item) => {
+            return {
+                [item.name[0]]: item.value
+            }
+        }).reduce((acc, item) => ({ ...acc, ...item }), {});
+        console.log(changedFilterFields);
+        setQueryParams((prev) => ({
+            ...prev, ...changedFilterFields
+        }))
+    }
     if (user?.role !== 'admin') {
         return <Navigate to='/auth/login' replace={true} />
     }
@@ -83,13 +97,14 @@ const Users = () => {
                     {isFetching && <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} />} />}
                     {isError && <Typography.Text type="danger">{error?.message}</Typography.Text>}
                 </Flex>
-                <UserFilter onFilterChange={(filterName: string, filterValue: string) => {
-                    console.log(filterName, filterValue);
-                }} >
-                    <Button onClick={() => setDrawerOpen(true)} type="primary" icon={<PlusOutlined />} >
-                        Add user
-                    </Button>
-                </UserFilter>
+                <Form form={filterForm} onFieldsChange={onFilterChange}>
+                    <UserFilter>
+                        <Button onClick={() => setDrawerOpen(true)} type="primary" icon={<PlusOutlined />} >
+                            Add user
+                        </Button>
+                    </UserFilter>
+                </Form>
+
                 <Table columns={columns} dataSource={users?.data} rowKey={'id'} pagination={{
                     total: users?.total,
                     pageSize: queryParams.perPage,
