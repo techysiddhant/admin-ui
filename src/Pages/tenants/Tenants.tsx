@@ -133,6 +133,10 @@ const Tenants = () => {
                                     ...prev, currentPage: page
                                 }
                             })
+                        },
+                        showTotal: (total: number, range: [number, number]) => {
+                            // console.log(range, total)
+                            return `Showing ${range[0]}-${range[1]} of ${total} items`
                         }
                     }}
                 />

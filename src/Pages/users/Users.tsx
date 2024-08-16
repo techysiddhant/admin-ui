@@ -134,6 +134,10 @@ const Users = () => {
                                 ...prev, currentPage: page
                             }
                         })
+                    },
+                    showTotal: (total: number, range: [number, number]) => {
+                        // console.log(range, total)
+                        return `Showing ${range[0]}-${range[1]} of ${total} items`
                     }
                 }} />
                 <Drawer title="Create user" width={720} open={drawerOpen} destroyOnClose={true} onClose={() => { form.resetFields(); setDrawerOpen(false) }}
