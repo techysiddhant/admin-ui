@@ -13,11 +13,14 @@ import {
 import { RightOutlined, PlusOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Link, Navigate } from 'react-router-dom';
 import TenantFilter from "./TenantFilter";
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useMemo } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useAuthStore } from '../../store';
 import { getTenants } from '../../http/api';
 import TenantForm from './forms/TenantForm';
+import { debounce } from 'lodash';
+import { PER_PAGE } from '../../constants';
+import { FieldData } from '../../types';
 
 const columns = [
     {
@@ -37,27 +40,57 @@ const columns = [
     },
 ];
 const Tenants = () => {
+    const [filterForm] = Form.useForm();
+    // const queryClient = useQueryClient();
     const { token: { colorBgLayout } } = theme.useToken();
     const [drawerOpen, setDrawerOpen] = React.useState(false);
+    const [queryParams, setQueryParams] = React.useState({
+        perPage: PER_PAGE,
+        currentPage: 1
+    })
     const {
         data: tenants,
         isFetching,
         isError,
         error,
     } = useQuery({
-        queryKey: ['tenants'],
+        queryKey: ['tenants', queryParams],
         queryFn: async () => {
-            return getTenants().then((res) => res.data);
+            const filteredParams = Object.fromEntries(Object.entries(queryParams).filter(item => !!item[1]));
+            const queryString = new URLSearchParams(filteredParams as unknown as Record<string, string>).toString();
+            return getTenants(queryString).then((res) => res.data);
         },
-        // placeholderData: keepPreviousData,
+        placeholderData: keepPreviousData,
     });
     const { user } = useAuthStore();
 
 
+    const debouncedQUpdate = useMemo(() => {
+        return debounce((value: string | undefined) => {
+            setQueryParams((prev) => ({ ...prev, q: value }))
+        }, 500)
+    }, [])
+
+    const onFilterChange = (changedFields: FieldData[]) => {
+        // console.log(changedFields);
+        const changedFilterFields = changedFields.map((item) => {
+            return {
+                [item.name[0]]: item.value
+            }
+        }).reduce((acc, item) => ({ ...acc, ...item }), {});
+        if ('q' in changedFilterFields) {
+            debouncedQUpdate(changedFilterFields.q)
+        } else {
+            setQueryParams((prev) => ({
+                ...prev, ...changedFilterFields
+            }))
+        }
+    }
 
     if (user?.role !== 'admin') {
         return <Navigate to="/" replace={true} />;
     }
+
 
     return (
         <>
@@ -73,7 +106,7 @@ const Tenants = () => {
                     {isError && <Typography.Text type="danger">{error.message}</Typography.Text>}
                 </Flex>
 
-                {/* <Form form={filterForm} onFieldsChange={onFilterChange}>
+                <Form form={filterForm} onFieldsChange={onFilterChange}>
                     <TenantFilter>
                         <Button
                             type="primary"
@@ -82,20 +115,26 @@ const Tenants = () => {
                             Add Restaurant
                         </Button>
                     </TenantFilter>
-                </Form> */}
-                <TenantFilter>
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={() => setDrawerOpen(true)}>
-                        Add Restaurant
-                    </Button>
-                </TenantFilter>
+                </Form>
+
 
                 <Table
                     columns={columns}
                     dataSource={tenants?.data}
                     rowKey={'id'}
+                    pagination={{
+                        total: tenants?.total,
+                        pageSize: queryParams.perPage,
+                        current: queryParams.currentPage,
+                        onChange: (page) => {
+                            // console.log(page);
+                            setQueryParams((prev) => {
+                                return {
+                                    ...prev, currentPage: page
+                                }
+                            })
+                        }
+                    }}
                 />
 
                 <Drawer

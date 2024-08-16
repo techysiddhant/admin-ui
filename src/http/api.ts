@@ -14,7 +14,8 @@ export const logout = () => {
 export const getUsers = (queryString: string) => {
   return api.get(`/users?${queryString}`);
 };
-export const getTenants = () => api.get(`/tenants`);
+export const getTenants = (queryString: string) =>
+  api.get(`/tenants?${queryString}`);
 export const createUser = (user: CreateUserData) => api.post(`/users`, user);
 export const createTenant = (tenant: CreateTenantData) =>
   api.post(`/tenants`, tenant);

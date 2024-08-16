@@ -80,7 +80,7 @@ const Users = () => {
     const debouncedQUpdate = useMemo(() => {
         return debounce((value: string | undefined) => {
             setQueryParams((prev) => ({ ...prev, q: value }))
-        }, 1000)
+        }, 500)
     }, [])
     const onFilterChange = (changedFields: FieldData[]) => {
         // console.log(changedFields);
@@ -96,8 +96,6 @@ const Users = () => {
                 ...prev, ...changedFilterFields
             }))
         }
-        // console.log(changedFilterFields);
-
     }
     if (user?.role !== 'admin') {
         return <Navigate to='/auth/login' replace={true} />
