@@ -23,7 +23,7 @@ const getMenuItems = (role: string) => {
         {
             key: '/products',
             icon: <Icon component={BasketIcon} />,
-            label: <NavLink to="/users">Products</NavLink>
+            label: <NavLink to="/products">Products</NavLink>
         },
         {
             key: '/promos',
