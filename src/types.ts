@@ -35,3 +35,12 @@ export type Category = {
   name: string;
   _id: string;
 };
+export type Product = {
+  _id: string;
+  name: string;
+  description: string;
+  isPublish: boolean;
+  category: Category;
+  createdAt: string;
+  image: string;
+};

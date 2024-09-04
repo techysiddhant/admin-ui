@@ -34,20 +34,18 @@ const ProductFilter = ({ children }: ProductFilterProps) => {
                             </Form.Item>
                         </Col>
                         <Col span={6}>
-                            <Form.Item name={"category"}>
+                            <Form.Item name={"categoryId"}>
                                 <Select style={{ width: '100%' }} allowClear={true} placeholder="Select category">
                                     {
                                         categories?.data.map((category: Category) => (
                                             <Select.Option key={category._id} value={category._id}>{category.name}</Select.Option>
                                         ))
                                     }
-                                    <Select.Option value="pizza">Pizza</Select.Option>
-                                    <Select.Option value="beverages">Beverages</Select.Option>
                                 </Select>
                             </Form.Item>
                         </Col>
                         <Col span={6}>
-                            <Form.Item name={"tenant"}>
+                            <Form.Item name={"tenantId"}>
                                 <Select style={{ width: '100%' }} allowClear={true} placeholder="Select restaurant">
                                     {
                                         restaurants?.data?.data.map((restaurant: Tenant) => (
@@ -59,12 +57,12 @@ const ProductFilter = ({ children }: ProductFilterProps) => {
                             </Form.Item>
                         </Col>
                         <Col span={6}>
-                            <Form.Item name={"isPublish"}>
-                                <Space>
-                                    <Switch defaultChecked />
-                                    <Typography.Text>Show only published</Typography.Text>
-                                </Space>
-                            </Form.Item>
+                            <Space>
+                                <Form.Item name={"isPublish"}>
+                                    <Switch defaultChecked={false} onChange={() => { }} />
+                                </Form.Item>
+                                <Typography.Text>Show only published</Typography.Text>
+                            </Space>
                         </Col>
                     </Row>
                 </Col>
