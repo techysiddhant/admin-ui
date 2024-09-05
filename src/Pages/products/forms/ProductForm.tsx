@@ -5,10 +5,10 @@ import { Category, Tenant } from "../../../types"
 import Pricing from "./Pricing";
 import Attributes from "./Attributes";
 import ProductImage from "./ProductImage";
+import { useAuthStore } from "../../../store";
 const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
     const selectedCategory = Form.useWatch('categoryId');
-    // const [messageApi, contextHolder] = message.useMessage();
-    // const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const { user } = useAuthStore();
     const { data: categories } = useQuery({
         queryFn: () => {
             return getCategories()
@@ -20,22 +20,8 @@ const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
             return getTenants(`perPage=100&currentPage=1`)
         },
         queryKey: ['restaurants'],
-
     })
-    // const uploaderConfig: UploadProps = {
-    //     name: 'file',
-    //     multiple: false,
-    //     showUploadList: false,
-    //     beforeUpload: (file) => {
-    //         const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg';
-    //         if (!isJpgOrPng) {
-    //             messageApi.error('You can only upload JPG/PNG file!');
-    //         }
-    //         //TODO: size validation
-    //         setImageUrl(URL.createObjectURL(file))
-    //         return false
-    //     }
-    // }
+
     return (
         <Row>
             <Col span={24}>
@@ -95,37 +81,39 @@ const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
                             </Row>
                         </Card>
                     )}
+                    {
+                        user?.role !== "manager" &&
+                        <Card title="Tenant info" bordered={false}>
+                            <Row gutter={24}>
+                                <Col span={24}>
+                                    <Form.Item
+                                        label="Select Tenant"
+                                        name="tenantId"
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message: 'Tenant is required',
+                                            },
+                                        ]}>
+                                        <Select
+                                            id="selectBoxInUserForm"
+                                            size="large"
+                                            style={{ width: '100%' }}
+                                            allowClear={true}
+                                            onChange={() => { }}
+                                            placeholder="Select Tenant">
+                                            {
+                                                restaurants?.data?.data.map((restaurant: Tenant) => (
+                                                    <Select.Option key={restaurant.id} value={restaurant.id}>{restaurant.name}</Select.Option>
+                                                ))
+                                            }
+                                        </Select>
+                                    </Form.Item>
+                                </Col>
 
-                    <Card title="Tenant info" bordered={false}>
-                        <Row gutter={24}>
-                            <Col span={24}>
-                                <Form.Item
-                                    label="Select Tenant"
-                                    name="tenantId"
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: 'Tenant is required',
-                                        },
-                                    ]}>
-                                    <Select
-                                        id="selectBoxInUserForm"
-                                        size="large"
-                                        style={{ width: '100%' }}
-                                        allowClear={true}
-                                        onChange={() => { }}
-                                        placeholder="Select Tenant">
-                                        {
-                                            restaurants?.data?.data.map((restaurant: Tenant) => (
-                                                <Select.Option key={restaurant.id} value={restaurant.id}>{restaurant.name}</Select.Option>
-                                            ))
-                                        }
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-
-                        </Row>
-                    </Card>
+                            </Row>
+                        </Card>
+                    }
                     {
                         selectedCategory && (
                             <Pricing selectedCategory={selectedCategory} />

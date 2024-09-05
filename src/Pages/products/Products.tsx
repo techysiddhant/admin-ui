@@ -158,7 +158,8 @@ const Products = () => {
             isPublish: form.getFieldValue('isPublish') ? true : false,
             categoryId,
             priceConfiguration: pricing,
-            attributes
+            attributes,
+            tenantId: user?.role === 'manager' ? user?.tenant?.id : form.getFieldValue('tenantId')
         }
         const formData = makeFormData(postData);
         productMutate(formData);
