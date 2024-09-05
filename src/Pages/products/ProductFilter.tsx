@@ -46,9 +46,10 @@ const ProductFilter = ({ children }: ProductFilterProps) => {
                                 </Select>
                             </Form.Item>
                         </Col>
-                        <Col span={6}>
-                            {
-                                user!.role === 'admin' && (
+
+                        {
+                            user!.role === 'admin' && (
+                                <Col span={6}>
                                     <Form.Item name={"tenantId"}>
                                         <Select style={{ width: '100%' }} allowClear={true} placeholder="Select restaurant">
                                             {
@@ -59,16 +60,17 @@ const ProductFilter = ({ children }: ProductFilterProps) => {
 
                                         </Select>
                                     </Form.Item>
-                                )
-                            }
+                                </Col>
+                            )
+                        }
 
-                        </Col>
+
                         <Col span={6}>
                             <Space>
                                 <Form.Item name={"isPublish"}>
                                     <Switch defaultChecked={false} onChange={() => { }} />
                                 </Form.Item>
-                                <Typography.Text>Show only published</Typography.Text>
+                                <Typography.Text style={{ marginBottom: 20, display: "block" }}>Show only published</Typography.Text>
                             </Space>
                         </Col>
                     </Row>
