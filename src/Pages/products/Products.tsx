@@ -98,7 +98,7 @@ const Products = () => {
         },
         placeholderData: keepPreviousData
     })
-    const { mutate: productMutate } = useMutation({
+    const { mutate: productMutate, isPending: isCreateLoading } = useMutation({
         mutationKey: ['user'],
         mutationFn: async (data: FormData) => createProduct(data).then((res) => res.data),
         onSuccess: async () => {
@@ -221,7 +221,7 @@ const Products = () => {
                     extra={
                         <Space>
                             <Button onClick={() => { form.resetFields(); setDrawerOpen(false) }}>Cancel</Button>
-                            <Button type="primary" onClick={onHandleSubmit}>Submit</Button>
+                            <Button type="primary" onClick={onHandleSubmit} loading={isCreateLoading}>Submit</Button>
                         </Space>
                     }
                 >
