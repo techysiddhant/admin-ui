@@ -134,7 +134,7 @@ const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
                     }
                     {
                         selectedCategory && (
-                            <Attributes />
+                            <Attributes selectedCategory={selectedCategory} />
                         )
                     }
                     <Card title="Other properties" bordered={false}>
