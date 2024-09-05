@@ -1,15 +1,16 @@
-import { Breadcrumb, Button, Flex, Form, Image, Space, Spin, Table, Tag, Typography } from "antd"
+import { Breadcrumb, Button, Drawer, Flex, Form, Image, Space, Spin, Table, Tag, Typography } from "antd"
 import { Link } from "react-router-dom"
 import { RightOutlined, LoadingOutlined, PlusOutlined } from '@ant-design/icons'
 import ProductFilter from "./ProductFilter";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { PER_PAGE } from "../../constants";
 import { getProducts } from "../../http/api";
 import { FieldData, Product } from "../../types";
 import { format } from "date-fns";
 import { debounce } from "lodash";
 import { useAuthStore } from "../../store";
+import ProductForm from "./forms/ProductForm";
 const columns = [
 
     {
@@ -73,8 +74,10 @@ const columns = [
 
 ]
 const Products = () => {
-    // const [form] = Form.useForm();
+    const [form] = Form.useForm();
     const { user } = useAuthStore();
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [currentEditingProduct, setcurrentEditingProduct] = useState<Product | null>(null);
 
     const [filterForm] = Form.useForm();
     //TODO: fix this tenantId issue on backend so we don't have security issues
@@ -111,6 +114,21 @@ const Products = () => {
                 ...prev, ...changedFilterFields, page: 1
             }))
         }
+
+    }
+    const onHandleSubmit = async () => {
+        // console.log(form.getFieldsValue());
+        const isEditMode = !!currentEditingProduct;
+        await form.validateFields();
+        // if (isEditMode) {
+        //     await updateUserMutate(form.getFieldsValue());
+        // } else {
+        //     await userMutate(form.getFieldsValue());
+        // }
+        form.resetFields();
+        setcurrentEditingProduct(null);
+        setDrawerOpen(false);
+
     }
     return (
         <>
@@ -122,7 +140,7 @@ const Products = () => {
                 </Flex>
                 <Form form={filterForm} onFieldsChange={onFilterChange}>
                     <ProductFilter>
-                        <Button onClick={() => { }} type="primary" icon={<PlusOutlined />} >
+                        <Button onClick={() => setDrawerOpen(true)} type="primary" icon={<PlusOutlined />} >
                             Add Product
                         </Button>
                     </ProductFilter>
@@ -139,7 +157,7 @@ const Products = () => {
                             </Space>
                         )
                     }
-                }]} dataSource={products?.data} rowKey={'id'} pagination={{
+                }]} dataSource={products?.data} rowKey={'_id'} pagination={{
                     total: products?.total,
                     pageSize: queryParams.limit,
                     current: queryParams.page,
@@ -155,6 +173,19 @@ const Products = () => {
                         return `Showing ${range[0]}-${range[1]} of ${total} items`
                     }
                 }} />
+
+                <Drawer title={currentEditingProduct ? "Edit Product" : "Create Product"} width={720} open={drawerOpen} destroyOnClose={true} onClose={() => { form.resetFields(); setDrawerOpen(false); setcurrentEditingProduct(null); }}
+                    extra={
+                        <Space>
+                            <Button onClick={() => { form.resetFields(); setDrawerOpen(false) }}>Cancel</Button>
+                            <Button type="primary" onClick={onHandleSubmit}>Submit</Button>
+                        </Space>
+                    }
+                >
+                    <Form layout="vertical" form={form}>
+                        <ProductForm isEditMode={!!currentEditingProduct} />
+                    </Form>
+                </Drawer>
             </Space>
         </>
     )
