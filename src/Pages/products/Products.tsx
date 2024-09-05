@@ -2,15 +2,16 @@ import { Breadcrumb, Button, Drawer, Flex, Form, Image, Space, Spin, Table, Tag,
 import { Link } from "react-router-dom"
 import { RightOutlined, LoadingOutlined, PlusOutlined } from '@ant-design/icons'
 import ProductFilter from "./ProductFilter";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useMemo, useState } from "react";
 import { PER_PAGE } from "../../constants";
-import { getProducts } from "../../http/api";
+import { createProduct, getProducts } from "../../http/api";
 import { FieldData, Product } from "../../types";
 import { format } from "date-fns";
 import { debounce } from "lodash";
 import { useAuthStore } from "../../store";
 import ProductForm from "./forms/ProductForm";
+import { makeFormData } from "./helpers";
 const columns = [
 
     {
@@ -80,6 +81,8 @@ const Products = () => {
     const [currentEditingProduct, setcurrentEditingProduct] = useState<Product | null>(null);
 
     const [filterForm] = Form.useForm();
+    const queryClient = useQueryClient();
+
     //TODO: fix this tenantId issue on backend so we don't have security issues
     const [queryParams, setQueryParams] = React.useState({
         limit: PER_PAGE,
@@ -94,6 +97,16 @@ const Products = () => {
             return getProducts(queryString).then((res) => res.data)
         },
         placeholderData: keepPreviousData
+    })
+    const { mutate: productMutate } = useMutation({
+        mutationKey: ['user'],
+        mutationFn: async (data: FormData) => createProduct(data).then((res) => res.data),
+        onSuccess: async () => {
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            form.resetFields();
+            setDrawerOpen(false);
+            return;
+        },
     })
     const debouncedQUpdate = useMemo(() => {
         return debounce((value: string | undefined) => {
@@ -118,16 +131,46 @@ const Products = () => {
     }
     const onHandleSubmit = async () => {
         // console.log(form.getFieldsValue());
-        const isEditMode = !!currentEditingProduct;
+        // const isEditMode = !!currentEditingProduct;
         await form.validateFields();
+        const priceConfiguration = form.getFieldValue('priceConfiguration');
+        const pricing = Object.entries(priceConfiguration).reduce((acc, [key, value]) => {
+            const parsedKey = JSON.parse(key);
+            return {
+                ...acc,
+                [parsedKey.configurationKey]: {
+                    priceType: parsedKey.priceType,
+                    availableOptions: value
+
+                }
+            }
+        }, {});
+        const categoryId = JSON.parse(form.getFieldValue('categoryId'))._id;
+        const attributes = Object.entries(form.getFieldValue('attributes')).map(([key, value]) => {
+            return {
+                name: key,
+                value: value
+            }
+        })
+        const postData = {
+            ...form.getFieldsValue(),
+            image: form.getFieldValue('image'),
+            isPublish: form.getFieldValue('isPublish') ? true : false,
+            categoryId,
+            priceConfiguration: pricing,
+            attributes
+        }
+        const formData = makeFormData(postData);
+        productMutate(formData);
+        // console.log(pricing);
         // if (isEditMode) {
         //     await updateUserMutate(form.getFieldsValue());
         // } else {
         //     await userMutate(form.getFieldsValue());
         // }
-        form.resetFields();
-        setcurrentEditingProduct(null);
-        setDrawerOpen(false);
+        // form.resetFields();
+        // setcurrentEditingProduct(null);
+        // setDrawerOpen(false);
 
     }
     return (

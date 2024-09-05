@@ -1,12 +1,15 @@
 import { useQuery } from "@tanstack/react-query"
-import { Card, Col, Form, Input, Row, Select, Space, Switch, Typography, Upload } from "antd"
+import { Card, Col, Form, Input, message, Row, Select, Space, Switch, Typography, Upload, UploadProps } from "antd"
 import { getCategories, getTenants } from "../../../http/api"
 import { Category, Tenant } from "../../../types"
 import { PlusOutlined } from '@ant-design/icons';
 import Pricing from "./Pricing";
 import Attributes from "./Attributes";
+import { useState } from "react";
 const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
     const selectedCategory = Form.useWatch('categoryId');
+    const [messageApi, contextHolder] = message.useMessage();
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
     const { data: categories } = useQuery({
         queryFn: () => {
             return getCategories()
@@ -20,6 +23,20 @@ const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
         queryKey: ['restaurants'],
 
     })
+    const uploaderConfig: UploadProps = {
+        name: 'file',
+        multiple: false,
+        showUploadList: false,
+        beforeUpload: (file) => {
+            const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg';
+            if (!isJpgOrPng) {
+                messageApi.error('You can only upload JPG/PNG file!');
+            }
+            //TODO: size validation
+            setImageUrl(URL.createObjectURL(file))
+            return false
+        }
+    }
     return (
         <Row>
             <Col span={24}>
@@ -74,6 +91,7 @@ const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
                         <Card title="Product Image" bordered={false}>
                             <Row gutter={20}>
                                 <Col span={12}>
+                                    {contextHolder}
                                     <Form.Item
                                         label="Product image"
                                         name="image"
@@ -84,11 +102,14 @@ const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
                                             },
                                         ]}
                                     >
-                                        <Upload maxCount={1} accept="image/*" listType="picture-card" >
-                                            <Space direction="vertical">
-                                                <PlusOutlined />
-                                                <Typography.Text>Upload</Typography.Text>
-                                            </Space>
+                                        <Upload accept="image/*" maxCount={1} listType="picture-card" {...uploaderConfig} >
+                                            {
+                                                imageUrl ? <img src={imageUrl} alt="avatar" style={{ width: '100%' }} /> : <Space direction="vertical">
+                                                    <PlusOutlined />
+                                                    <Typography.Text>Upload</Typography.Text>
+                                                </Space>
+                                            }
+
                                         </Upload>
 
                                     </Form.Item>

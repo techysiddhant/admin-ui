@@ -59,3 +59,7 @@ export type Product = {
   createdAt: string;
   image: string;
 };
+export type ImageField = {
+  file: File;
+};
+export type CreateProductData = Product & { image: ImageField };
