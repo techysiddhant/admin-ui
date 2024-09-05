@@ -2,12 +2,14 @@ import { useQuery } from "@tanstack/react-query"
 import { Card, Col, Form, Input, Row, Select, Space, Switch, Typography } from "antd"
 import { getCategories, getTenants } from "../../http/api"
 import { Category, Tenant } from "../../types"
+import { useAuthStore } from "../../store"
 
 type ProductFilterProps = {
     children?: React.ReactNode
     onFilterChange?: (filterName: string, filterValue: string) => void
 }
 const ProductFilter = ({ children }: ProductFilterProps) => {
+    const { user } = useAuthStore();
     const { data: restaurants } = useQuery({
         queryFn: () => {
             return getTenants(`perPage=100&currentPage=1`)
@@ -45,16 +47,21 @@ const ProductFilter = ({ children }: ProductFilterProps) => {
                             </Form.Item>
                         </Col>
                         <Col span={6}>
-                            <Form.Item name={"tenantId"}>
-                                <Select style={{ width: '100%' }} allowClear={true} placeholder="Select restaurant">
-                                    {
-                                        restaurants?.data?.data.map((restaurant: Tenant) => (
-                                            <Select.Option key={restaurant.id} value={restaurant.id}>{restaurant.name}</Select.Option>
-                                        ))
-                                    }
+                            {
+                                user!.role === 'admin' && (
+                                    <Form.Item name={"tenantId"}>
+                                        <Select style={{ width: '100%' }} allowClear={true} placeholder="Select restaurant">
+                                            {
+                                                restaurants?.data?.data.map((restaurant: Tenant) => (
+                                                    <Select.Option key={restaurant.id} value={restaurant.id}>{restaurant.name}</Select.Option>
+                                                ))
+                                            }
 
-                                </Select>
-                            </Form.Item>
+                                        </Select>
+                                    </Form.Item>
+                                )
+                            }
+
                         </Col>
                         <Col span={6}>
                             <Space>

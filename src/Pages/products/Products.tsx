@@ -9,6 +9,7 @@ import { getProducts } from "../../http/api";
 import { FieldData, Product } from "../../types";
 import { format } from "date-fns";
 import { debounce } from "lodash";
+import { useAuthStore } from "../../store";
 const columns = [
 
     {
@@ -73,10 +74,14 @@ const columns = [
 ]
 const Products = () => {
     // const [form] = Form.useForm();
+    const { user } = useAuthStore();
+
     const [filterForm] = Form.useForm();
+    //TODO: fix this tenantId issue on backend so we don't have security issues
     const [queryParams, setQueryParams] = React.useState({
         limit: PER_PAGE,
-        page: 1
+        page: 1,
+        tenantId: user?.role === 'manager' ? user?.tenant?.id : undefined
     })
     const { data: products, isFetching, isError, error } = useQuery({
         queryKey: ['products', queryParams],
