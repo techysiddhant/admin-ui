@@ -1,19 +1,26 @@
 import { Card, Col, Form, Radio, Row, Switch, Typography } from "antd"
 import { Attribute, Category } from "../../../types";
+import { useQuery } from "@tanstack/react-query";
+import { getCategory } from "../../../http/api";
 
 type AttributesProps = {
     selectedCategory: string | null
 }
 const Attributes = ({ selectedCategory }: AttributesProps) => {
-    const category: Category | null = selectedCategory ? JSON.parse(selectedCategory) : null;
-
-    if (!category) {
+    const { data: fetchedCategory } = useQuery<Category>({
+        queryKey: ['category', selectedCategory],
+        queryFn: async () => {
+            return getCategory(selectedCategory!).then((res) => res.data);
+        },
+        staleTime: 1000 * 60 * 5
+    })
+    if (!fetchedCategory) {
         return null
     }
     return (
         <Card bordered={false} title={<Typography.Text>Product Price</Typography.Text>}>
             {
-                category.attributes.map((attribute: Attribute) => (
+                fetchedCategory.attributes.map((attribute: Attribute) => (
                     <div key={attribute.name}>
                         {
                             attribute.widgetType === "radio" ? (

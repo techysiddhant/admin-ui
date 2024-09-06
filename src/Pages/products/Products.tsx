@@ -3,9 +3,9 @@ import { Link } from "react-router-dom"
 import { RightOutlined, LoadingOutlined, PlusOutlined } from '@ant-design/icons'
 import ProductFilter from "./ProductFilter";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { PER_PAGE } from "../../constants";
-import { createProduct, getProducts } from "../../http/api";
+import { createProduct, getProducts, updateProduct } from "../../http/api";
 import { FieldData, Product } from "../../types";
 import { format } from "date-fns";
 import { debounce } from "lodash";
@@ -13,7 +13,6 @@ import { useAuthStore } from "../../store";
 import ProductForm from "./forms/ProductForm";
 import { makeFormData } from "./helpers";
 const columns = [
-
     {
         title: 'Product Name',
         dataIndex: 'name',
@@ -79,9 +78,30 @@ const Products = () => {
     const { user } = useAuthStore();
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [currentEditingProduct, setcurrentEditingProduct] = useState<Product | null>(null);
-
     const [filterForm] = Form.useForm();
     const queryClient = useQueryClient();
+
+    useEffect(() => {
+        if (currentEditingProduct) {
+            setDrawerOpen(true);
+            const priceConfiguration = Object.entries(currentEditingProduct.priceConfiguration).reduce((acc, [key, value]) => {
+                const stringifedKey = JSON.stringify({ configurationKey: key, priceType: value.priceType });
+                return {
+                    ...acc,
+                    [stringifedKey]: value.availableOptions
+                }
+            }, {});
+            const attributes = currentEditingProduct.attributes.reduce((acc, item) => {
+                return {
+                    ...acc,
+                    [item.name]: item.value
+                }
+            }, []);
+            // console.log(currentEditingProduct);
+            // console.log(priceConfiguration);
+            form.setFieldsValue({ ...currentEditingProduct, priceConfiguration: priceConfiguration, attributes: attributes, categoryId: currentEditingProduct.category._id });
+        }
+    }, [currentEditingProduct, form])
 
     //TODO: fix this tenantId issue on backend so we don't have security issues
     const [queryParams, setQueryParams] = React.useState({
@@ -100,11 +120,18 @@ const Products = () => {
     })
     const { mutate: productMutate, isPending: isCreateLoading } = useMutation({
         mutationKey: ['user'],
-        mutationFn: async (data: FormData) => createProduct(data).then((res) => res.data),
+        mutationFn: async (data: FormData) => {
+            if (currentEditingProduct) {
+                return updateProduct(currentEditingProduct._id, data).then((res) => res.data)
+            } else {
+                return createProduct(data).then((res) => res.data)
+            }
+        },
         onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: ['products'] });
             form.resetFields();
             setDrawerOpen(false);
+            setcurrentEditingProduct(null);
             return;
         },
     })
@@ -130,8 +157,6 @@ const Products = () => {
 
     }
     const onHandleSubmit = async () => {
-        // console.log(form.getFieldsValue());
-        // const isEditMode = !!currentEditingProduct;
         await form.validateFields();
         const priceConfiguration = form.getFieldValue('priceConfiguration');
         const pricing = Object.entries(priceConfiguration).reduce((acc, [key, value]) => {
@@ -141,11 +166,10 @@ const Products = () => {
                 [parsedKey.configurationKey]: {
                     priceType: parsedKey.priceType,
                     availableOptions: value
-
                 }
             }
         }, {});
-        const categoryId = JSON.parse(form.getFieldValue('categoryId'))._id;
+        const categoryId = form.getFieldValue('categoryId');
         const attributes = Object.entries(form.getFieldValue('attributes')).map(([key, value]) => {
             return {
                 name: key,
@@ -163,16 +187,6 @@ const Products = () => {
         }
         const formData = makeFormData(postData);
         productMutate(formData);
-        // console.log(pricing);
-        // if (isEditMode) {
-        //     await updateUserMutate(form.getFieldsValue());
-        // } else {
-        //     await userMutate(form.getFieldsValue());
-        // }
-        // form.resetFields();
-        // setcurrentEditingProduct(null);
-        // setDrawerOpen(false);
-
     }
     return (
         <>
@@ -193,11 +207,10 @@ const Products = () => {
                     title: 'Actions',
                     dataIndex: 'actions',
                     key: 'actions',
-                    render: () => {
+                    render: (_: string, record: Product) => {
                         return (
                             <Space>
-                                <Button onClick={() => {
-                                }} type="link">Edit</Button>
+                                <Button onClick={() => setcurrentEditingProduct(record)} type="link">Edit</Button>
                             </Space>
                         )
                     }
@@ -221,13 +234,13 @@ const Products = () => {
                 <Drawer title={currentEditingProduct ? "Edit Product" : "Create Product"} width={720} open={drawerOpen} destroyOnClose={true} onClose={() => { form.resetFields(); setDrawerOpen(false); setcurrentEditingProduct(null); }}
                     extra={
                         <Space>
-                            <Button onClick={() => { form.resetFields(); setDrawerOpen(false) }}>Cancel</Button>
-                            <Button type="primary" onClick={onHandleSubmit} loading={isCreateLoading}>Submit</Button>
+                            <Button onClick={() => { form.resetFields(); setDrawerOpen(false); setcurrentEditingProduct(null) }}>Cancel</Button>
+                            <Button type="primary" onClick={onHandleSubmit} loading={isCreateLoading}>{currentEditingProduct ? "Update Product" : "Submit"}</Button>
                         </Space>
                     }
                 >
                     <Form layout="vertical" form={form}>
-                        <ProductForm isEditMode={!!currentEditingProduct} />
+                        <ProductForm form={form} />
                     </Form>
                 </Drawer>
             </Space>

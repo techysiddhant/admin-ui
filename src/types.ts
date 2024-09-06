@@ -50,6 +50,10 @@ export interface Category {
   priceConfiguration: PriceConfiguration;
   attributes: Attribute[];
 }
+export type ProductAttribute = {
+  name: string;
+  value: string | boolean;
+};
 export type Product = {
   _id: string;
   name: string;
@@ -58,6 +62,9 @@ export type Product = {
   category: Category;
   createdAt: string;
   image: string;
+  tenantId: string;
+  priceConfiguration: PriceConfiguration;
+  attributes: ProductAttribute[];
 };
 export type ImageField = {
   file: File;

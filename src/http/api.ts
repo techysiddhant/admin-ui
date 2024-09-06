@@ -36,3 +36,11 @@ export const createProduct = (formData: FormData) =>
       "Content-Type": "multipart/form-data",
     },
   });
+export const updateProduct = (productId: string, formData: FormData) =>
+  api.put(`${CATALOG_SERVICE}/products/${productId}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+export const getCategory = (categoryId: string) =>
+  api.get(`${CATALOG_SERVICE}/categories/${categoryId}`);

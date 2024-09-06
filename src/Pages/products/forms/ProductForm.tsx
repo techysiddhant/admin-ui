@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
-import { Card, Col, Form, Input, Row, Select, Space, Switch, Typography } from "antd"
+import { Card, Col, Form, Input, Row, Select, Space, Switch, Typography, FormInstance } from "antd"
 import { getCategories, getTenants } from "../../../http/api"
 import { Category, Tenant } from "../../../types"
 import Pricing from "./Pricing";
 import Attributes from "./Attributes";
 import ProductImage from "./ProductImage";
 import { useAuthStore } from "../../../store";
-const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
+const ProductForm = ({ form }: { form: FormInstance }) => {
     const selectedCategory = Form.useWatch('categoryId');
     const { user } = useAuthStore();
     const { data: categories } = useQuery({
@@ -51,7 +51,7 @@ const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
                                     <Select size="large" style={{ width: '100%' }} allowClear={true} placeholder="Select category">
                                         {
                                             categories?.data.map((category: Category) => (
-                                                <Select.Option key={category._id} value={JSON.stringify(category)}>{category.name}</Select.Option>
+                                                <Select.Option key={category._id} value={category._id}>{category.name}</Select.Option>
                                             ))
                                         }
                                     </Select>
@@ -72,15 +72,15 @@ const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
                             </Col>
                         </Row>
                     </Card>
-                    {!isEditMode && (
-                        <Card title="Product Image" bordered={false}>
-                            <Row gutter={20}>
-                                <Col span={12}>
-                                    <ProductImage />
-                                </Col>
-                            </Row>
-                        </Card>
-                    )}
+
+                    <Card title="Product Image" bordered={false}>
+                        <Row gutter={20}>
+                            <Col span={12}>
+                                <ProductImage initialImage={form.getFieldValue('image')} />
+                            </Col>
+                        </Row>
+                    </Card>
+
                     {
                         user?.role !== "manager" &&
                         <Card title="Tenant info" bordered={false}>
@@ -104,7 +104,7 @@ const ProductForm = ({ isEditMode = false }: { isEditMode: boolean }) => {
                                             placeholder="Select Tenant">
                                             {
                                                 restaurants?.data?.data.map((restaurant: Tenant) => (
-                                                    <Select.Option key={restaurant.id} value={restaurant.id}>{restaurant.name}</Select.Option>
+                                                    <Select.Option key={restaurant.id} value={String(restaurant.id)}>{restaurant.name}</Select.Option>
                                                 ))
                                             }
                                         </Select>
